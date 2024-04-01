@@ -1,0 +1,16 @@
+[
+    {
+      "name": "Website 1",
+      "url": "https://www.website1.com/jobs",
+      "jobs_class": "jobs-list",
+      "title_class": "job-title",
+      "location_class": "job-location"
+    },
+    {
+      "name": "Website 2",
+      "url": "https://www.website2.com/careers",
+      "jobs_class": "job-listings",
+      "title_class": "job-title",
+      "location_class": "job-location"
+    }
+  ]
