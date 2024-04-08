@@ -1,7 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
-import chromedriver_binary  # This imports chromedriver_binary which includes the path to the chromedriver binary
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -9,7 +8,6 @@ import json
 from urllib.parse import urlparse
 import psycopg2
 import os
-
 
 # Load the configuration from config.json
 with open('production_config.json', 'r') as file:
@@ -21,16 +19,17 @@ def filter_exact_class_length(css_class, class_name, length):
 
 print("running jobs scraper")
 def scrape_company_careers_selenium(company_url, company_jobs_class, company_jobs_title_class, company_jobs_location_class):
+    print("scrape_company")
     chrome_options = Options()
     chrome_options.add_argument("--headless")  # Run Chrome in headless mode
     driver = webdriver.Chrome(options=chrome_options)
     driver.get(company_url)
-    
+    print("chromedriver")
     # Wait for the careers listings container to be present
-    WebDriverWait(driver, 60).until(
+    WebDriverWait(driver, 180).until(
         EC.presence_of_element_located((By.CLASS_NAME, company_jobs_class))
     )
-
+    print("afterwebdriverwait")
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     jobs = soup.find_all(class_=company_jobs_class)
     
@@ -38,6 +37,7 @@ def scrape_company_careers_selenium(company_url, company_jobs_class, company_job
     base_url = urlparse(company_url).scheme + "://" + urlparse(company_url).netloc
     
     for job in jobs:
+        print(f"job: {job}")
         # set allows to remove duplicates
         url_elements = []
 
@@ -77,17 +77,17 @@ def scrape_company_careers_selenium(company_url, company_jobs_class, company_job
             else:
                 link = "Link not found"
  
-            titles_to_check = ["Product", "Operations"]
-            locations_to_check = ["Tulsa", "Remote"]
-            if any(string in title for string in titles_to_check):
-                if any(string in location for string in locations_to_check):
+            titles_to_check = ["Product", "Operations","Founder"]
+            locations_to_check = ["Tulsa", "Remote", "AMER"]
+            if any(string.lower() in title.lower() for string in titles_to_check):
+                if any(string.lower() in location.lower() for string in locations_to_check):
                     company_job_postings.append({
                         'title': title,
                         'link': link,
                         'location': location
                     })
 
-    print(f"length shld be 7, then 2, len: {len(company_job_postings)}")
+    print(f"len: {len(company_job_postings)}")
     driver.quit()
     return company_job_postings
 
@@ -148,8 +148,10 @@ def insert_scraped_data_into_database(all_job_postings):
         'body': 'Data inserted into PostgreSQL'
     }
     
+# Execute the scraper function in lambda
+def lambda_handler():
+    scraped_data = scrape_all_companies_selenium()
+    insert_scraped_data_into_database(scraped_data)
+    print(scraped_data)
 
-# Execute the scraper function
-scraped_data = scrape_all_companies_selenium()
-insert_scraped_data_into_database(scraped_data)
-print(scraped_data)
+lambda_handler()

@@ -1,4 +1,5 @@
 venv/
 production_config.json
+production_config_done.json
 database_config.json
 jobs_scraper.zip
